@@ -65,4 +65,4 @@ class Marmiton(Resource):
         if next_page:
             start = "".join(re.findall(regex, next_page[0]))
             page = "".join(re.findall(regex, next_page[1]))
-            return f"http://localhost:5000/ingredients?plat={plat}&start={start}&page={page}"
+            return f"ingredients?plat={plat}&start={start}&page={page}"
