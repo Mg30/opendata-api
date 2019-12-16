@@ -6,17 +6,30 @@ import numpy as np
 import pandas as pd
 import json
 
+
 class ChurnClassifier(Resource):
-    def post (self):
+    def post(self):
         clf = RandomForestClassifier()
         clf = pickle.load(open("churn_classifier.sav", "rb"))
+        try:
+            data = request.files["file"]
+        except KeyError:
+            return {"error": "expected a key file containing csv file"}, 400
 
-        data = request.get_json()["data"]
-        data = json.dumps(data)
-        X_test = pd.read_json(data)
+        try:
+            X_test = pd.read_csv(data)
+        except Exception:
+            return {"error": "could not read the file"}, 400
+
+        try:
+            X_test = X_test.drop(columns=["Churn", "Phone", "State"])
+        except KeyError as e:
+            return {"error": "could not find {e}"}, 400
+
         y_pred = clf.predict(X_test)
-
         y_pred = pd.DataFrame(y_pred, columns=["prediction"])
-        y_pred["prediction"] = y_pred["prediction"].replace(0,"stay")
-        y_pred["prediction"] = y_pred["prediction"].replace(1,"leave")
-        return y_pred.to_dict(orient='records')
+        y_pred["prediction"] = y_pred["prediction"].replace(0, "stay")
+        y_pred["prediction"] = y_pred["prediction"].replace(1, "leave")
+        X_test["prediction"] = y_pred
+
+        return X_test.to_dict(orient="records")
