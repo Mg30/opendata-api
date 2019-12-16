@@ -1,5 +1,4 @@
-from flask_restful import Resource
-from flask_restful import reqparse
+from flask_restful import Resource,reqparse
 from bs4 import BeautifulSoup
 import requests
 import re
@@ -23,13 +22,13 @@ class Marmiton(Resource):
         else:
             url = f"https://www.marmiton.org/recettes/recherche.aspx?aqt={plat}"
 
-        result = self.parse_ingredients(url, plat)
+        result = self.parse_recette(url, plat)
         if result:
             return result, 200
         else:
             return {"Error": "No result found"}, 404
 
-    def parse_ingredients(self, url, plat):
+    def parse_recette(self, url, plat):
         req = requests.get(url)
         source_page = BeautifulSoup(req.text)
         recettes = source_page.find_all(class_="recipe-card")
