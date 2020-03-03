@@ -65,3 +65,17 @@ class Marmiton(Resource):
             start = "".join(re.findall(regex, next_page[0]))
             page = "".join(re.findall(regex, next_page[1]))
             return f"ingredients?plat={plat}&start={start}&page={page}"
+
+
+class InfoClimat (Resource):
+    url = "https://www.infoclimat.fr/api-previsions-meteo.html?id=2988507&cntry=FR"
+
+
+    def get(self):
+        req = requests.get(self.url)
+        source_page = BeautifulSoup(req.text)
+        textareas = source_page.find_all("textarea")
+        json_area_text = textareas[2].get_text()
+        auth = json_area_text.split('auth=')[-1]
+        return {"token": auth}
+

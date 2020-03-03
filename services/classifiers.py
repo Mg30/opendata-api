@@ -22,6 +22,7 @@ class ChurnClassifier(Resource):
             return {"error": "could not read the file"}, 400
 
         try:
+            initial_churn = X_test["Churn"]
             X_test = X_test.drop(columns=["Churn", "Phone", "State"])
         except KeyError as e:
             return {"error": "could not find {e}"}, 400
@@ -30,6 +31,9 @@ class ChurnClassifier(Resource):
         y_pred = pd.DataFrame(y_pred, columns=["prediction"])
         y_pred["prediction"] = y_pred["prediction"].replace(0, "stay")
         y_pred["prediction"] = y_pred["prediction"].replace(1, "leave")
-        X_test["prediction"] = y_pred
+        X_test["Prediction"] = y_pred
+        X_test["Original"] = initial_churn
+        X_test["Original"] = X_test["Original"].replace(0, "stay")
+        X_test["Original"] = X_test["Original"].replace(1, "leave")
 
         return X_test.to_dict(orient="records")
