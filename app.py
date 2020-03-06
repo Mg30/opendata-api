@@ -9,7 +9,7 @@ CORS(app)
 api =  swagger.docs(Api(app))
 
 
-api.add_resource(Marmiton, "/api/scrapping/marmiton/fetch/ingredients"))
+api.add_resource(Marmiton, "/api/scrapping/marmiton/fetch/ingredients")
 api.add_resource(InfoClimat, "/api/info-climat/auth")
 
 if __name__ == "__main__":
