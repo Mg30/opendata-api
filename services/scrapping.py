@@ -124,29 +124,3 @@ class InfoClimat(Resource):
             auth = json_area_text.split("auth=")[-1]
             return {"token": auth}, 200
 
-
-class DownloadFile(Resource):
-    url = "https://static.data.gouv.fr/resources/donnees-temps-reel-de-mesure-des-concentrations-de-polluants-atmospheriques-reglementes-1/20191015-090721/fr-2018-d-lcsqa-ineris-20190918-1.xml"
-
-    def get(self):
-        req = requests.get(self.url)
-        soup = BeautifulSoup(req.text, "xml")
-        stations = soup.find_all("gml:featureMember")
-        results = []
-        for station in stations:
-            try:
-                station_id = station.find("base:localId").get_text()
-                coordinates = station.find("gml:pos").get_text()
-                station_name = station.find("gn:text").get_text()
-                results.append(
-                    {
-                        "station_id": station_id,
-                        "coordinates": coordinates,
-                        "station_name": station_name,
-                    }
-                )
-            except:
-                pass
-
-        return results
-
