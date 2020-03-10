@@ -37,7 +37,6 @@ class Marmiton(Resource):
             },
         ],
         responseMessages=[
-            {"code": 200, "message": "Plat trouvé"},
             {
                 "code": 400,
                 "message": "Le nom du plat n'as pas été spécifié en argument",
@@ -107,16 +106,15 @@ class InfoClimat(Resource):
     url = "https://www.infoclimat.fr/api-previsions-meteo.html?id=2988507&cntry=FR"
 
     @swagger.operation(
-        notes="Permet d'obtenir un token d'authentification pour l'api prevision météo",
+        notes="Permet d'obtenir un token d'authentification pour le site https://www.infoclimat.fr/api-previsions-meteo.html?id=2988507&cntry=FR",
         responseMessages=[
-            {"code": 200, "message": "Token parsé et envoyé"},
-            {"code": 500, "message": "le site api-prévision n'a pas pu être atteint"},
+            {"code": 503, "message": "le site api-prévision n'a pas pu être atteint"},
         ],
     )
     def get(self):
         req = requests.get(self.url)
         if req.status_code != 200:
-            return {"error": "le site api-prevision n'a pas pu être atteint"}, 500
+            return {"error": "le site api-prevision n'a pas pu être atteint"}, 503
         else:
             source_page = BeautifulSoup(req.text)
             textareas = source_page.find_all("textarea")
