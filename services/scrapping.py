@@ -4,6 +4,8 @@ import requests
 import re
 from flask_restful_swagger import swagger
 
+from re import error
+
 parser = reqparse.RequestParser()
 parser.add_argument("plat")
 parser.add_argument("start")
@@ -56,16 +58,18 @@ class Marmiton(Resource):
             url = f"https://www.marmiton.org/recettes/recherche.aspx?aqt={plat}&start={start}&page={page}"
         else:
             url = f"https://www.marmiton.org/recettes/recherche.aspx?aqt={plat}"
-
         try:
             result = self.parse_recette(url, plat)
             return result, 200
-        except:
-            return {"error": "service indisponible"}, 503
+        except Exception as e :
+            return {"error": f"{str(e)}"}, 503
+        
+
+        
 
     def parse_recette(self, url, plat):
         req = requests.get(url)
-        source_page = BeautifulSoup(req.text)
+        source_page = BeautifulSoup(req.text, 'html.parser')
         recettes = source_page.find_all(class_="recipe-card")
         if recettes:
             recettes = self.extract_ingredients(recettes)
@@ -92,7 +96,8 @@ class Marmiton(Resource):
     def extract_next_page(self, source_page, plat):
         regex = r"\d"
         next_page = (
-            source_page.find("li", class_="next-page")
+            source_page.find("li", class_="selected")
+            .next_sibling
             .contents[0]["href"]
             .split("&")[1:]
         )
@@ -116,9 +121,8 @@ class InfoClimat(Resource):
         if req.status_code != 200:
             return {"error": "le site api-prevision n'a pas pu être atteint"}, 503
         else:
-            source_page = BeautifulSoup(req.text)
+            source_page = BeautifulSoup(req.text, 'html.parser')
             textareas = source_page.find_all("textarea")
             json_area_text = textareas[2].get_text()
             auth = json_area_text.split("auth=")[-1]
             return {"token": auth}, 200
-
