@@ -13,6 +13,7 @@ parser.add_argument("start")
 parser.add_argument("page")
 parser.add_argument("url")
 
+
 class Marmiton(Resource):
     @swagger.operation(
         notes="Renvoie une liste de 15 plats à partir d'un nom de plat passé en paramètre à partir du site marmiton avec pour chacun sa liste d'ingrédients",
@@ -155,11 +156,15 @@ class RealTime(Resource):
     def get(self):
         args = parser.parse_args()
         url = args.get("url")
-        print(url)
+        if not url:
+            return {"error": "l'url est requise"}, 400
         response = self.get_xml(url)
         if not response.status_code == 200:
             return {"error": f"Request to {url} failed"}, response.status_code
         xml = response.text
+        if not xml:
+            return {"error": "le document xml est vide"}, 400
+
         observations = self.parse_observations(xml)
         schema = ObservationSchema(many=True)
         return schema.dump(observations), 200
@@ -169,11 +174,17 @@ class RealTime(Resource):
         return r
 
     def parse_observations(self, xml: str) -> List[Observation]:
+
         soup = BeautifulSoup(xml, "xml")
         observations = []
         for member in soup.find_all("om:OM_Observation"):
             key = member.find("om:observedProperty")["xlink:href"].split("/")[-1]
-            obsv = Observation(self.polluants[key])
+            sample_point = (
+                member.find_all("om:NamedValue")[-1]
+                .find("om:value")["xlink:href"]
+                .split("/")[-1]
+            )
+            obsv = Observation(self.polluants[key], sample_point)
             values = member.find("swe:values").get_text().replace("\n", "").split("@@")
             records = self.parse_records(values)
             obsv.records = records

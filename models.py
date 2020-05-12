@@ -11,8 +11,9 @@ class Record(object):
 
 
 class Observation(object):
-    def __init__(self, polluant: str) -> None:
+    def __init__(self, polluant: str, sample_point:str) -> None:
         self.polluant = polluant
+        self.sample_point = sample_point
         self.records = []
 
     def add(self, record: Record):

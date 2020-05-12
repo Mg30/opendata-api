@@ -11,4 +11,5 @@ class RecordSchema(Schema):
 
 class ObservationSchema(Schema):
     polluant = fields.Str()
+    sample_point = fields.Str()
     records = fields.List(fields.Nested(RecordSchema))
