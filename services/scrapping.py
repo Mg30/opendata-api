@@ -3,14 +3,15 @@ from bs4 import BeautifulSoup
 import requests
 import re
 from flask_restful_swagger import swagger
-
-from re import error
+from models import Record, Observation
+from schemas import ObservationSchema
+from typing import List
 
 parser = reqparse.RequestParser()
 parser.add_argument("plat")
 parser.add_argument("start")
 parser.add_argument("page")
-
+parser.add_argument("url")
 
 class Marmiton(Resource):
     @swagger.operation(
@@ -61,15 +62,12 @@ class Marmiton(Resource):
         try:
             result = self.parse_recette(url, plat)
             return result, 200
-        except Exception as e :
+        except Exception as e:
             return {"error": f"{str(e)}"}, 503
-        
-
-        
 
     def parse_recette(self, url, plat):
         req = requests.get(url)
-        source_page = BeautifulSoup(req.text, 'html.parser')
+        source_page = BeautifulSoup(req.text, "html.parser")
         recettes = source_page.find_all(class_="recipe-card")
         if recettes:
             recettes = self.extract_ingredients(recettes)
@@ -97,8 +95,7 @@ class Marmiton(Resource):
         regex = r"\d"
         next_page = (
             source_page.find("li", class_="selected")
-            .next_sibling
-            .contents[0]["href"]
+            .next_sibling.contents[0]["href"]
             .split("&")[1:]
         )
         if next_page:
@@ -121,8 +118,72 @@ class InfoClimat(Resource):
         if req.status_code != 200:
             return {"error": "le site api-prevision n'a pas pu être atteint"}, 503
         else:
-            source_page = BeautifulSoup(req.text, 'html.parser')
+            source_page = BeautifulSoup(req.text, "html.parser")
             textareas = source_page.find_all("textarea")
             json_area_text = textareas[2].get_text()
             auth = json_area_text.split("auth=")[-1]
             return {"token": auth}, 200
+
+
+class RealTime(Resource):
+    polluants = {
+        "1": "SO2",
+        "10": "CO",
+        "6001": "PM2.5",
+        "7": "O3",
+        "20": "C6H6",
+        "9": "NOX as NO2",
+        "8": "NO2",
+        "5": "PM10",
+    }
+
+    @swagger.operation(
+        notes="fourni un endpoint pour les données https://www.data.gouv.fr/fr/datasets/donnees-temps-reel-de-mesure-des-concentrations-de-polluants-atmospheriques-reglementes-1/",
+        parameters=[
+            {
+                "name": "url",
+                "description": "l'url du fichier xml à parser",
+                "required": True,
+                "paramType": "query",
+                "dataType": "string",
+            }
+        ],
+        responseMessages=[
+            {"code": 503, "message": "l'url du fichier n'a pas été atteinte"},
+        ],
+    )
+    def get(self):
+        args = parser.parse_args()
+        url = args.get("url")
+        print(url)
+        response = self.get_xml(url)
+        if not response.status_code == 200:
+            return {"error": f"Request to {url} failed"}, response.status_code
+        xml = response.text
+        observations = self.parse_observations(xml)
+        schema = ObservationSchema(many=True)
+        return schema.dump(observations), 200
+
+    def get_xml(self, url: str) -> requests.Response:
+        r = requests.get(url)
+        return r
+
+    def parse_observations(self, xml: str) -> List[Observation]:
+        soup = BeautifulSoup(xml, "xml")
+        observations = []
+        for member in soup.find_all("om:OM_Observation"):
+            key = member.find("om:observedProperty")["xlink:href"].split("/")[-1]
+            obsv = Observation(self.polluants[key])
+            values = member.find("swe:values").get_text().replace("\n", "").split("@@")
+            records = self.parse_records(values)
+            obsv.records = records
+            observations.append(obsv)
+        return observations
+
+    def parse_records(self, values: List) -> List[Record]:
+        records = []
+        for v in values:
+            block = v.split(",")
+            if block[0]:
+                records.append(Record(*block))
+        return records
