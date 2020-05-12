@@ -1,6 +1,6 @@
 from flask_restful_swagger import swagger
 from flask_restful import Resource, reqparse
-from db import get_db
+from database import get_db
 import dns
 
 parser = reqparse.RequestParser()
@@ -26,16 +26,21 @@ class SamplePoint(Resource):
         ],
     )
     def get(self, sample_point_id):
-        db = get_db()
+
         if not sample_point_id:
             return {"error": "l'id du sample point doit être fourni"}, 400
         try:
+            db = get_db()
+            db = db.openData
             sample_point = db.SamplingPoints.find_one(
                 {"@gml:id": sample_point_id}, projection={"_id": False}
             )
             if sample_point:
                 return sample_point, 200
             else:
-                return {"error": f"Le sample point {sample_point_id} n'as pas été trouvé"}, 404
+                return (
+                    {"error": f"Le sample point {sample_point_id} n'as pas été trouvé"},
+                    404,
+                )
         except dns.exception.Timeout:
             return {"error": "service temporairement indisponible"}, 503
