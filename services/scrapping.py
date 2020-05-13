@@ -105,25 +105,29 @@ class Marmiton(Resource):
             return f"ingredients?plat={plat}&start={start}&page={page}"
 
 
-class InfoClimat(Resource):
-    url = "https://www.infoclimat.fr/api-previsions-meteo.html?id=2988507&cntry=FR"
-
-    @swagger.operation(
-        notes="Permet d'obtenir un token d'authentification pour le site https://www.infoclimat.fr/api-previsions-meteo.html?id=2988507&cntry=FR",
-        responseMessages=[
-            {"code": 503, "message": "le site api-prévision n'a pas pu être atteint"},
-        ],
-    )
+class RealTimeDataAvailable(Resource):
     def get(self):
-        req = requests.get(self.url)
-        if req.status_code != 200:
-            return {"error": "le site api-prevision n'a pas pu être atteint"}, 503
-        else:
-            source_page = BeautifulSoup(req.text, "html.parser")
-            textareas = source_page.find_all("textarea")
-            json_area_text = textareas[2].get_text()
-            auth = json_area_text.split("auth=")[-1]
-            return {"token": auth}, 200
+        r = requests.get(
+            "https://www.data.gouv.fr/fr/datasets/donnees-temps-reel-de-mesure-des-concentrations-de-polluants-atmospheriques-reglementes-1/"
+        )
+        soup = BeautifulSoup(r.text, "lxml")
+        cards = soup.find_all("article", {"class": "card resource-card"})
+        results = []
+        for card in cards:
+            item = {}
+            name = card.find("h4").get_text()
+            if "E2" in name:
+                try:
+                    item["name"] = name
+                    href = card.find("a", {"class": "btn btn-sm btn-primary"})["href"]
+                    item[
+                        "link"
+                    ] = f"https://mg-services.herokuapp.com/api/open-data/pollution/air/real-time?url={href}"
+                    results.append(item)
+                except KeyError:
+                    pass
+
+        return results, 200
 
 
 class RealTime(Resource):
