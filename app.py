@@ -6,7 +6,7 @@ from services.endpoints import SamplePoint
 from flask_restful_swagger import swagger
 
 
-def create_app(config):
+def create_app(*args):
     app = Flask(__name__)
     CORS(app)
 
