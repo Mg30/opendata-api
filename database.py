@@ -1,7 +1,6 @@
 from flask import g
+from secrets import MONGO_DB_CONNECT
 import pymongo
-
-MONGO_DB_CONNECT = "mongodb+srv://py_openData:RaGEwX7Y6W9mckZD@firstcluster-v01yi.mongodb.net/test?retryWrites=true&w=majority"
 
 
 def get_db():
