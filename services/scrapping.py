@@ -106,10 +106,18 @@ class Marmiton(Resource):
 
 
 class RealTimeDataAvailable(Resource):
+    @swagger.operation(
+        notes="Liste les datasets disponibles sur le site https://www.data.gouv.fr/fr/datasets/donnees-temps-reel-de-mesure-des-concentrations-de-polluants-atmospheriques-reglementes-1/",
+        responseMessages=[
+            {"code": 503, "message": "service temporairement indisponible"},
+        ],
+    )
     def get(self):
         r = requests.get(
             "https://www.data.gouv.fr/fr/datasets/donnees-temps-reel-de-mesure-des-concentrations-de-polluants-atmospheriques-reglementes-1/"
         )
+        if r.status_code != 200:
+            return {"error" : "service temporairement indisponible"}
         soup = BeautifulSoup(r.text, "lxml")
         cards = soup.find_all("article", {"class": "card resource-card"})
         results = []
