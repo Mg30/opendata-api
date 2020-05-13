@@ -15,14 +15,14 @@ class SamplePoint(Resource):
         parameters=[
             {
                 "name": "sample_point_id",
-                "description": "l'id du sample point p.ex: FR01001_38",
+                "description": "l'id du sample point p.ex: SPO-FR01001_38",
                 "required": True,
                 "paramType": "path",
                 "dataType": "string",
             }
         ],
         responseMessages=[
-            {"code": 400, "message": "l'id du sample point doit être fourni"},
+            {"code": 400, "message": "L'id du sample point doit être fourni"},
             {"code": 404, "message": "Le sample point n'as pas été trouvé"},
             {"code": 503, "message": "service temporairement indisponible"},
         ],
@@ -46,4 +46,3 @@ class SamplePoint(Resource):
                 )
         except ValueError:
             return {"error": "service temporairement indisponible"}, 503
-        

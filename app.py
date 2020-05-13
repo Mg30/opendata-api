@@ -1,7 +1,7 @@
 from flask import Flask, g
 from flask_cors import CORS
 from flask_restful import Api
-from services.scrapping import Marmiton, RealTime, RealTimeDataAvailable
+from services.scrapping import RealTime, RealTimeDataAvailable
 from services.endpoints import SamplePoint
 from flask_restful_swagger import swagger
 
@@ -11,7 +11,6 @@ def create_app(*args):
     CORS(app)
 
     api = swagger.docs(Api(app))
-    api.add_resource(Marmiton, "/api/scrapping/marmiton/fetch/ingredients")
     api.add_resource(RealTime, "/api/open-data/pollution/air/real-time")
     api.add_resource(
         SamplePoint,
